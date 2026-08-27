@@ -77,6 +77,32 @@ function printMarksheet(summary, student, profile) {
   window.setTimeout(() => win.print(), 350);
 }
 
+function printClassResultList(summary, profile) {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  const rows = summary.students
+    .map(
+      (student, index) =>
+        `<tr><td>${index + 1}</td><td>${escapeHtml(student.student_name)}</td><td dir="ltr">${escapeHtml(student.registration_number)}</td><td dir="ltr">${student.obtained_marks}</td><td dir="ltr">${student.total_marks}</td><td dir="ltr">${student.percentage}%</td><td>${student.result === "pass" ? text.pass : student.result === "fail" ? text.fail : text.pending}</td></tr>`,
+    )
+    .join("");
+  const passed = summary.students.filter(
+    (student) => student.result === "pass",
+  ).length;
+  const failed = summary.students.filter(
+    (student) => student.result === "fail",
+  ).length;
+  const pending = summary.students.filter(
+    (student) => student.result === "pending",
+  ).length;
+  win.document.write(
+    `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>مجموعی نتائج کی فہرست</title><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial,"Noto Nastaliq Urdu",serif;color:#111}${madrasaPrintHeaderCss}.summary{display:flex;justify-content:center;gap:12px;margin-top:12px;font-size:12px}.summary span{border:1px solid #777;padding:5px 10px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}th,td{border:1px solid #777;padding:8px;text-align:right}th{background:#eee}</style></head><body>${getMadrasaPrintHeaderHtml(profile, { title: `مجموعی نتائج کی فہرست — ${summary.exam_name}`, subtitle: `${summary.students[0]?.class_name || ""} · ${summary.exam_date}` })}<div class="summary"><span>کل طلبہ: ${summary.students.length}</span><span>پاس: ${passed}</span><span>فیل: ${failed}</span><span>زیرِ التوا: ${pending}</span></div><table><thead><tr><th>#</th><th>طالب علم</th><th>رجسٹریشن نمبر</th><th>حاصل کردہ نمبر</th><th>کل نمبر</th><th>فیصد</th><th>نتیجہ</th></tr></thead><tbody>${rows}</tbody></table></body></html>`,
+  );
+  win.document.close();
+  win.focus();
+  window.setTimeout(() => win.print(), 350);
+}
+
 export default function ExamResultsPage() {
   const [examId, setExamId] = useState("");
   const [classId, setClassId] = useState("");
@@ -151,13 +177,20 @@ export default function ExamResultsPage() {
         </p>
       ) : (
         <section className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="border-b border-border p-5">
+          <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="font-bold">
               {summary.exam_name} —{" "}
               {classId &&
                 allowedClasses.find((item) => String(item.id) === classId)
                   ?.name}
             </h2>
+            <Button
+              variant="outline"
+              onClick={() => printClassResultList(summary, profile)}
+            >
+              <Printer />
+              مجموعی نتیجہ فہرست پرنٹ کریں
+            </Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[58rem] text-right text-sm">
