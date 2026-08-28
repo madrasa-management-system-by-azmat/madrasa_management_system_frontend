@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getMadrasaProfile, updateMadrasaProfile } from "@/lib/api/settings";
+import {
+  downloadTenantBackup,
+  getMadrasaProfile,
+  restoreTenantBackup,
+  updateMadrasaProfile,
+} from "@/lib/api/settings";
 
 export function useMadrasaProfile() {
   return useQuery({
@@ -18,3 +23,13 @@ export function useUpdateMadrasaProfile() {
       queryClient.invalidateQueries({ queryKey: ["madrasa-profile"] }),
   });
 }
+
+export function useRestoreTenantBackup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: restoreTenantBackup,
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+export { downloadTenantBackup };

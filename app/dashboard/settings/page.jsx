@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, ImagePlus, Save } from "lucide-react";
+import {
+  Building2,
+  Download,
+  ImagePlus,
+  RotateCcw,
+  Save,
+  Upload,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useMadrasaProfile,
+  downloadTenantBackup,
+  useRestoreTenantBackup,
   useUpdateMadrasaProfile,
 } from "@/hooks/useSettings";
 import { getMediaUrl } from "@/lib/apiClient";
@@ -32,9 +41,11 @@ const fields = [
 
 function MadrasaProfileForm({ profile }) {
   const updateProfile = useUpdateMadrasaProfile();
+  const restoreBackup = useRestoreTenantBackup();
   const [values, setValues] = useState(profile);
   const [logoFile, setLogoFile] = useState(null);
   const [preview, setPreview] = useState(getMediaUrl(profile.logo) || "");
+  const [backupFile, setBackupFile] = useState(null);
 
   function changeValue(event) {
     setValues((current) => ({
@@ -68,6 +79,47 @@ function MadrasaProfileForm({ profile }) {
     } catch (error) {
       toast.error(
         "معلومات محفوظ نہیں ہو سکیں",
+        getApiErrorMessage(error, "عمل مکمل نہیں ہو سکا۔"),
+      );
+    }
+  }
+
+  async function downloadBackup() {
+    try {
+      const backup = await downloadTenantBackup();
+      const url = URL.createObjectURL(backup);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `madrasa-backup-${new Date().toISOString().slice(0, 10)}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("بیک اپ ڈاؤن لوڈ ہو گیا");
+    } catch (error) {
+      toast.error(
+        "بیک اپ ڈاؤن لوڈ نہیں ہو سکا",
+        getApiErrorMessage(error, "عمل مکمل نہیں ہو سکا۔"),
+      );
+    }
+  }
+
+  async function restore() {
+    if (!backupFile) return;
+    if (
+      !window.confirm(
+        "بیک اپ بحال کرنے سے موجودہ مدرسہ کا ڈیٹا مکمل طور پر تبدیل ہو جائے گا۔ کیا آپ جاری رکھنا چاہتے ہیں؟",
+      )
+    )
+      return;
+    try {
+      const result = await restoreBackup.mutateAsync(backupFile);
+      setBackupFile(null);
+      toast.success(
+        "بیک اپ بحال ہو گیا",
+        `${result.records} ریکارڈ بحال کیے گئے۔`,
+      );
+    } catch (error) {
+      toast.error(
+        "بیک اپ بحال نہیں ہو سکا",
         getApiErrorMessage(error, "عمل مکمل نہیں ہو سکا۔"),
       );
     }
@@ -122,6 +174,67 @@ function MadrasaProfileForm({ profile }) {
                 PNG، JPG یا WebP فائل منتخب کریں۔
               </span>
             </label>
+          </div>
+        </section>
+        <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+          <div className="mb-5">
+            <h2 className="font-bold">بیک اپ اور بحالی</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              اپنے مدرسہ کے ڈیٹا اور اپ لوڈ کی گئی تصاویر کا ZIP بیک اپ محفوظ
+              کریں۔ بحالی صرف اسی مدرسہ کے بیک اپ سے کی جا سکتی ہے۔
+            </p>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="rounded-xl bg-muted p-4">
+              <h3 className="font-semibold">ڈیٹا بیک اپ</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                موجودہ طلبہ، فیس، امتحانات، حاضری، ہاسٹل، حفظ اور میڈیا فائلوں
+                کی نقل ڈاؤن لوڈ کریں۔
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={downloadBackup}
+                className="mt-4"
+              >
+                <Download />
+                بیک اپ ڈاؤن لوڈ کریں
+              </Button>
+            </div>
+            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+              <h3 className="font-semibold text-destructive">
+                بیک اپ بحال کریں
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                احتیاط: بحالی موجودہ مدرسہ کا تمام ڈیٹا تبدیل کر دے گی۔ صرف اسی
+                مدرسہ کا ZIP بیک اپ اپ لوڈ کریں۔
+              </p>
+              <input
+                type="file"
+                accept="application/zip,.zip"
+                onChange={(event) =>
+                  setBackupFile(event.target.files?.[0] || null)
+                }
+                className="mt-4 block w-full text-sm text-muted-foreground file:me-0 file:rounded-md file:border-0 file:bg-destructive file:px-3 file:py-2 file:text-sm file:font-medium file:text-destructive-foreground"
+              />
+              {backupFile && (
+                <p className="mt-2 text-xs text-muted-foreground" dir="ltr">
+                  {backupFile.name}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={restore}
+                disabled={!backupFile || restoreBackup.isPending}
+                className="mt-4"
+              >
+                <RotateCcw />
+                {restoreBackup.isPending
+                  ? "بحال ہو رہا ہے..."
+                  : "بیک اپ بحال کریں"}
+              </Button>
+            </div>
           </div>
         </section>
         <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
