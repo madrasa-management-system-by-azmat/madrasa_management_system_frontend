@@ -8,10 +8,11 @@ import {
   updateMadrasaProfile,
 } from "@/lib/api/settings";
 
-export function useMadrasaProfile() {
+export function useMadrasaProfile(options = {}) {
   return useQuery({
     queryKey: ["madrasa-profile"],
     queryFn: getMadrasaProfile,
+    ...options,
   });
 }
 
@@ -19,8 +20,10 @@ export function useUpdateMadrasaProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateMadrasaProfile,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["madrasa-profile"] }),
+    onSuccess: (profile) => {
+      queryClient.setQueryData(["madrasa-profile"], profile);
+      return queryClient.invalidateQueries({ queryKey: ["madrasa-profile"] });
+    },
   });
 }
 

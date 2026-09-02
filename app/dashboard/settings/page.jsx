@@ -5,6 +5,7 @@ import {
   Building2,
   Download,
   ImagePlus,
+  Palette,
   RotateCcw,
   Save,
   Upload,
@@ -18,6 +19,7 @@ import {
   useUpdateMadrasaProfile,
 } from "@/hooks/useSettings";
 import { getMediaUrl } from "@/lib/apiClient";
+import { applyBrandTheme, DEFAULT_BRAND_COLORS } from "@/lib/brandTheme";
 import { getApiErrorMessage, toast } from "@/lib/toast";
 
 const inputClass =
@@ -53,6 +55,13 @@ function MadrasaProfileForm({ profile }) {
       [event.target.name]: event.target.value,
     }));
   }
+  function resetBrandColors() {
+    setValues((current) => ({
+      ...current,
+      primary_color: DEFAULT_BRAND_COLORS.primary,
+      sidebar_color: DEFAULT_BRAND_COLORS.sidebar,
+    }));
+  }
   function chooseLogo(event) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -73,7 +82,10 @@ function MadrasaProfileForm({ profile }) {
     }
     if (logoFile) data.set("logo", logoFile);
     try {
-      await updateProfile.mutateAsync(data);
+      const savedProfile = await updateProfile.mutateAsync(data);
+      setValues(savedProfile);
+      setPreview(getMediaUrl(savedProfile.logo) || "");
+      applyBrandTheme(savedProfile);
       setLogoFile(null);
       toast.success("مدرسہ کی معلومات محفوظ ہو گئیں");
     } catch (error) {
@@ -174,6 +186,70 @@ function MadrasaProfileForm({ profile }) {
                 PNG، JPG یا WebP فائل منتخب کریں۔
               </span>
             </label>
+          </div>
+        </section>
+        <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 font-bold">
+                <Palette className="size-5 text-primary" />
+                برانڈ کے رنگ
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                بنیادی بٹنوں، روابط اور سائڈ بار کے رنگ اپنے مدرسہ کی شناخت کے
+                مطابق منتخب کریں۔
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={resetBrandColors}
+            >
+              <RotateCcw />
+              اصل رنگ بحال کریں
+            </Button>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {[
+              ["primary_color", "بنیادی رنگ", DEFAULT_BRAND_COLORS.primary],
+              [
+                "sidebar_color",
+                "سائڈ بار کا رنگ",
+                DEFAULT_BRAND_COLORS.sidebar,
+              ],
+            ].map(([name, label, fallback]) => {
+              const color = values[name] || fallback;
+              return (
+                <label key={name} className="grid gap-2 text-sm font-medium">
+                  {label}
+                  <span className="flex items-center gap-3 rounded-lg border border-input bg-background p-2">
+                    <input
+                      name={name}
+                      type="color"
+                      value={color}
+                      onChange={changeValue}
+                      className="size-10 cursor-pointer rounded-md border-0 bg-transparent p-0"
+                      aria-label={label}
+                    />
+                    <input
+                      name={name}
+                      value={color}
+                      onChange={changeValue}
+                      pattern="#[0-9A-Fa-f]{6}"
+                      maxLength={7}
+                      dir="ltr"
+                      className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 font-mono text-sm uppercase outline-none focus:ring-3 focus:ring-ring/50"
+                    />
+                    <span
+                      className="size-10 shrink-0 rounded-md border border-border shadow-sm"
+                      style={{ backgroundColor: color }}
+                      aria-hidden="true"
+                    />
+                  </span>
+                </label>
+              );
+            })}
           </div>
         </section>
         <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
@@ -300,7 +376,5 @@ export default function SettingsPage() {
         <Skeleton className="h-96 w-full" />
       </div>
     );
-  return profile ? (
-    <MadrasaProfileForm key={profile.updated_at} profile={profile} />
-  ) : null;
+  return profile ? <MadrasaProfileForm profile={profile} /> : null;
 }

@@ -2,6 +2,7 @@ import { Plus, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 import PrintStudentsListButton from "@/components/dashboard/students/PrintStudentsListButton";
+import PrintBlankAdmissionFormButton from "@/components/dashboard/students/PrintBlankAdmissionFormButton";
 
 const text = {
   add: "\u0646\u06CC\u0627 \u0637\u0627\u0644\u0628 \u0639\u0644\u0645",
@@ -26,6 +27,7 @@ export default function StudentsHeader() {
         <p className="mt-2 text-sm text-muted-foreground">{text.description}</p>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
+        <PrintBlankAdmissionFormButton />
         <PrintStudentsListButton />
         <Link
           href="/dashboard/students/add"

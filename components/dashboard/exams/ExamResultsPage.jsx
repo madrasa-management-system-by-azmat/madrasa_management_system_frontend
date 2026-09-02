@@ -11,6 +11,7 @@ import {
   getMadrasaPrintHeaderHtml,
   madrasaPrintHeaderCss,
 } from "@/lib/madrasaPrintHeader";
+import { getStudentMarksheetHtml } from "@/lib/printStudentMarksheet";
 
 const text = {
   title: "نتائج",
@@ -45,33 +46,7 @@ const escapeHtml = (value) =>
 function printMarksheet(summary, student, profile) {
   const win = window.open("", "_blank");
   if (!win) return;
-  const subjectRows = student.subjects
-    .map(
-      (subject) =>
-        `<tr><td>${escapeHtml(subject.subject_name)}</td><td dir="ltr">${escapeHtml(subject.total_marks)}</td><td dir="ltr">${escapeHtml(subject.passing_marks)}</td><td dir="ltr">${escapeHtml(subject.marks)}</td><td>${subject.result === "pass" ? text.pass : subject.result === "fail" ? text.fail : text.pending}</td></tr>`,
-    )
-    .join("");
-  const resultLabel =
-    student.result === "pass"
-      ? text.pass
-      : student.result === "fail"
-        ? text.fail
-        : text.pending;
-  win.document.write(
-    `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>مارک شیٹ — ${escapeHtml(student.student_name)}</title><style>@page{size:A4;margin:10mm}body{font-family:Arial,"Noto Nastaliq Urdu",serif;color:#111}.sheet{border:2px solid #111;padding:18px}h1,h2{text-align:center;margin:0 0 8px}.info{display:grid;grid-template-columns:1fr 1fr;border:1px solid #777;margin-top:18px}.field{padding:9px;border-bottom:1px solid #777}.field:nth-child(odd){border-left:1px solid #777}.label{display:block;color:#555;font-size:12px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #777;padding:8px;text-align:right}th{background:#eee}.summary{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.card{border:1px solid #777;padding:8px;text-align:center}.result{font-size:18px;font-weight:700;margin-top:16px;text-align:center;padding:10px;background:#eee}</style></head><body><main class="sheet"><h1>مدرسہ فیضان القرآن</h1><h2>مارک شیٹ — ${escapeHtml(summary.exam_name)}</h2><div class="info"><div class="field"><span class="label">طالب علم</span>${escapeHtml(student.student_name)}</div><div class="field"><span class="label">رجسٹریشن نمبر</span><span dir="ltr">${escapeHtml(student.registration_number)}</span></div><div class="field"><span class="label">جماعت</span>${escapeHtml(student.class_name)}</div><div class="field"><span class="label">امتحان کی تاریخ</span><span dir="ltr">${escapeHtml(summary.exam_date)}</span></div></div><table><thead><tr><th>مضمون</th><th>کل نمبر</th><th>پاسنگ نمبر</th><th>حاصل کردہ نمبر</th><th>نتیجہ</th></tr></thead><tbody>${subjectRows}</tbody></table><div class="summary"><div class="card">کل نمبر<br><b dir="ltr">${student.total_marks}</b></div><div class="card">حاصل کردہ<br><b dir="ltr">${student.obtained_marks}</b></div><div class="card">فیصد<br><b dir="ltr">${student.percentage}%</b></div><div class="card">پاسنگ نمبر<br><b dir="ltr">${student.passing_marks}</b></div></div><div class="result">مجموعی نتیجہ: ${resultLabel}</div></main></body></html>`,
-  );
-  win.document.head.insertAdjacentHTML(
-    "beforeend",
-    `<style>${madrasaPrintHeaderCss}</style>`,
-  );
-  win.document.querySelector(".sheet h1")?.remove();
-  win.document.querySelector(".sheet h2")?.remove();
-  win.document.querySelector(".sheet")?.insertAdjacentHTML(
-    "afterbegin",
-    getMadrasaPrintHeaderHtml(profile, {
-      title: `مارک شیٹ — ${summary.exam_name}`,
-    }),
-  );
+  win.document.write(getStudentMarksheetHtml(summary, student, profile));
   win.document.close();
   win.focus();
   window.setTimeout(() => win.print(), 350);

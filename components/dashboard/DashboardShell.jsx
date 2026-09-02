@@ -4,8 +4,15 @@ import { useEffect, useState } from "react";
 
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopbar from "@/components/dashboard/DashboardTopbar";
+import { useAuthContext } from "@/context/AuthContext";
+import { useMadrasaProfile } from "@/hooks/useSettings";
+import { applyBrandTheme } from "@/lib/brandTheme";
 
 export default function DashboardShell({ children }) {
+  const { isSuperAdmin } = useAuthContext();
+  const { data: madrasaProfile } = useMadrasaProfile({
+    enabled: !isSuperAdmin,
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === "undefined") {
@@ -22,6 +29,10 @@ export default function DashboardShell({ children }) {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
+
+  useEffect(() => {
+    applyBrandTheme(isSuperAdmin ? null : madrasaProfile);
+  }, [isSuperAdmin, madrasaProfile]);
 
   function toggleTheme() {
     const nextThemeIsDark = !isDark;
