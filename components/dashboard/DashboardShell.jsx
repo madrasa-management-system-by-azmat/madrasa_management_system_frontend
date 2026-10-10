@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopbar from "@/components/dashboard/DashboardTopbar";
+import GlobalSearchDialog from "@/components/dashboard/GlobalSearchDialog";
 import { useAuthContext } from "@/context/AuthContext";
 import { useMadrasaProfile } from "@/hooks/useSettings";
 import { applyBrandTheme } from "@/lib/brandTheme";
@@ -13,7 +13,6 @@ export default function DashboardShell({ children }) {
   const { data: madrasaProfile } = useMadrasaProfile({
     enabled: !isSuperAdmin,
   });
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -25,6 +24,7 @@ export default function DashboardShell({ children }) {
       ? savedTheme === "dark"
       : window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
@@ -33,6 +33,17 @@ export default function DashboardShell({ children }) {
   useEffect(() => {
     applyBrandTheme(isSuperAdmin ? null : madrasaProfile);
   }, [isSuperAdmin, madrasaProfile]);
+
+  useEffect(() => {
+    function openSearch(event) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setIsSearchOpen(true);
+      }
+    }
+    window.addEventListener("keydown", openSearch);
+    return () => window.removeEventListener("keydown", openSearch);
+  }, []);
 
   function toggleTheme() {
     const nextThemeIsDark = !isDark;
@@ -44,18 +55,18 @@ export default function DashboardShell({ children }) {
 
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
-      <DashboardSidebar
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-      />
-
-      <div className="min-h-screen lg:pr-72">
+      <div className="min-h-screen">
         <DashboardTopbar
           isDark={isDark}
-          onMenuToggle={() => setIsMenuOpen(true)}
+          madrasaProfile={madrasaProfile}
           onThemeToggle={toggleTheme}
+          onSearchOpen={() => setIsSearchOpen(true)}
         />
-        <main className="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <GlobalSearchDialog
+          open={isSearchOpen}
+          onOpenChange={setIsSearchOpen}
+        />
+        <main className="mx-auto w-full max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {children}
         </main>
       </div>

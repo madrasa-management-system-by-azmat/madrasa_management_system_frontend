@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { TableLoadingSkeleton } from "@/components/ui/loading-skeleton";
 import {
   Dialog,
   DialogContent,
@@ -309,9 +310,11 @@ export default function TeacherManagement() {
             </Button>
           </div>
         ) : isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">
-            {text.loading}
-          </p>
+          <TableLoadingSkeleton
+            rows={5}
+            columns={7}
+            className="rounded-none border-0"
+          />
         ) : visibleTeachers.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-foreground">
             {text.empty}

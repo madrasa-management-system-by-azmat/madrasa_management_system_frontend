@@ -50,19 +50,30 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const value = useMemo(
-    () => ({
-      user: session?.user ?? null,
-      role: session?.user?.role ?? null,
-      isSuperAdmin: Boolean(session?.user?.is_super_admin),
-      hasRole: (...roles) => roles.includes(session?.user?.role),
+  const value = useMemo(() => {
+    const user = session?.user ?? null;
+    const permissions = Array.isArray(user?.permissions)
+      ? user.permissions
+      : [];
+    const permissionSet = new Set(permissions);
+    return {
+      user,
+      role: user?.role ?? null,
+      roles: user?.roles ?? [],
+      permissions,
+      isSuperAdmin: Boolean(user?.is_super_admin),
+      hasRole: (...roleCodes) => roleCodes.includes(user?.role),
+      hasPermission: (code) => permissionSet.has(code),
+      hasAnyPermission: (...codes) =>
+        codes.some((code) => permissionSet.has(code)),
+      hasAllPermissions: (...codes) =>
+        codes.every((code) => permissionSet.has(code)),
       isAuthenticated: Boolean(session?.access),
       isReady,
       startSession,
       endSession,
-    }),
-    [session, isReady, startSession, endSession],
-  );
+    };
+  }, [session, isReady, startSession, endSession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

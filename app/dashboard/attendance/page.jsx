@@ -21,6 +21,15 @@ const statuses = {
     className: "bg-destructive text-destructive-foreground",
   },
   leave: { label: "رخصت", className: "bg-warning text-warning-foreground" },
+  late: { label: "تاخیر", className: "bg-info text-info-foreground" },
+  sick: {
+    label: "بیمار",
+    className: "bg-muted-foreground text-background",
+  },
+  outside: {
+    label: "ادارے سے باہر",
+    className: "bg-primary text-primary-foreground",
+  },
 };
 
 export default function AttendancePage() {
@@ -49,7 +58,7 @@ export default function AttendancePage() {
       ...result,
       [statusFor(student)]: result[statusFor(student)] + 1,
     }),
-    { present: 0, absent: 0, leave: 0 },
+    { present: 0, absent: 0, leave: 0, late: 0, sick: 0, outside: 0 },
   );
   function selectClass(value) {
     setAcademicClassId(value);
@@ -197,7 +206,7 @@ export default function AttendancePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {Object.entries(statuses).map(([key, item]) => (
                       <button
                         key={key}

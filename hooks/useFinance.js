@@ -21,6 +21,26 @@ function useFinanceMutation(key, mutationFn) {
   });
 }
 
+function useFinanceControlMutation(mutationFn) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      [
+        "finance-dashboard",
+        "finance-ledger",
+        "finance-yearly-report",
+        "funds",
+        "budgets",
+        "payroll-runs",
+        "staff-compensations",
+        "financial-categories",
+        "fund-transfers",
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
+    },
+  });
+}
+
 export const useStudentFeeLogs = () =>
   useFinanceQuery("student-fee-logs", financeApi.getStudentFeeLogs);
 export const useCreateStudentFeeLog = () =>
@@ -98,3 +118,47 @@ export const useUpdateTeacherSalary = () =>
   );
 export const useDeleteTeacherSalary = () =>
   useFinanceMutation("teacher-salaries", financeApi.deleteTeacherSalary);
+
+export const useFinanceDashboard = (year) =>
+  useQuery({
+    queryKey: ["finance-dashboard", year],
+    queryFn: () => financeApi.getFinanceDashboard(year),
+  });
+export const useFinancialCategories = () =>
+  useFinanceQuery("financial-categories", financeApi.getFinancialCategories);
+export const useCreateFinancialCategory = () =>
+  useFinanceControlMutation(financeApi.createFinancialCategory);
+export const useFundTransfers = () =>
+  useFinanceQuery("fund-transfers", financeApi.getFundTransfers);
+export const useCreateFundTransfer = () =>
+  useFinanceControlMutation(financeApi.createFundTransfer);
+export const useBudgets = () =>
+  useFinanceQuery("budgets", financeApi.getBudgets);
+export const useCreateBudget = () =>
+  useFinanceControlMutation(financeApi.createBudget);
+export const useSubmitBudget = () =>
+  useFinanceControlMutation(financeApi.submitBudget);
+export const useApproveBudget = () =>
+  useFinanceControlMutation(financeApi.approveBudget);
+export const useBudgetVariance = (id) =>
+  useQuery({
+    queryKey: ["budget-variance", id],
+    queryFn: () => financeApi.getBudgetVariance(id),
+    enabled: Boolean(id),
+  });
+export const useStaffCompensations = () =>
+  useFinanceQuery("staff-compensations", financeApi.getStaffCompensations);
+export const useCreateStaffCompensation = () =>
+  useFinanceControlMutation(financeApi.createStaffCompensation);
+export const useFinanceStaffLookup = () =>
+  useFinanceQuery("finance-staff-lookup", financeApi.getFinanceStaffLookup);
+export const usePayrollRuns = () =>
+  useFinanceQuery("payroll-runs", financeApi.getPayrollRuns);
+export const useCreatePayrollRun = () =>
+  useFinanceControlMutation(financeApi.createPayrollRun);
+export const useGeneratePayroll = () =>
+  useFinanceControlMutation(financeApi.generatePayroll);
+export const useApprovePayroll = () =>
+  useFinanceControlMutation(financeApi.approvePayroll);
+export const usePayPayroll = () =>
+  useFinanceControlMutation(financeApi.payPayroll);

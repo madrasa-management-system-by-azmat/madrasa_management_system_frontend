@@ -55,6 +55,7 @@ const text = {
   no: "نہیں",
   date: "تاریخ",
   amount: "رقم",
+  billingMonth: "بلنگ مہینہ",
   dueDate: "آخری تاریخ",
   paid: "ادا شدہ",
   unpaid: "غیر ادا شدہ",
@@ -528,18 +529,21 @@ export default function StudentOverviewPage() {
             <RecordSection
               title={text.fees}
               icon={CreditCard}
-              rows={student.fee_logs}
+              rows={student.monthly_fees}
               columns={[
+                { key: "month", label: text.billingMonth },
                 { key: "due_date", label: text.dueDate },
-                { key: "amount_due", label: text.amount },
+                { key: "total_due", label: text.amount },
                 {
-                  key: "is_paid",
+                  key: "outstanding_balance",
                   label: text.paid,
                   render: (row) =>
-                    row.is_paid ? (
+                    Number(row.outstanding_balance) === 0 ? (
                       <span className="text-success">{text.paid}</span>
                     ) : (
-                      <span className="text-warning">{text.unpaid}</span>
+                      <span className="text-warning">
+                        {text.unpaid} ({row.outstanding_balance})
+                      </span>
                     ),
                 },
               ]}

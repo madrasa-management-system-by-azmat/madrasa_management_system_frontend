@@ -3,15 +3,18 @@
 import { useState } from "react";
 import {
   Building2,
+  ContactRound,
   Download,
   ImagePlus,
   Palette,
   RotateCcw,
   Save,
-  Upload,
+  ShieldCheck,
+  UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useMadrasaProfile,
   downloadTenantBackup,
@@ -21,6 +24,7 @@ import {
 import { getMediaUrl } from "@/lib/apiClient";
 import { applyBrandTheme, DEFAULT_BRAND_COLORS } from "@/lib/brandTheme";
 import { getApiErrorMessage, toast } from "@/lib/toast";
+import BackupManagement from "@/components/dashboard/settings/BackupManagement";
 
 const inputClass =
   "h-10 w-full rounded-lg border border-input bg-background px-3 text-right text-sm outline-none focus:ring-3 focus:ring-ring/50";
@@ -68,8 +72,7 @@ function MadrasaProfileForm({ profile }) {
     setLogoFile(file);
     setPreview(URL.createObjectURL(file));
   }
-  async function submit(event) {
-    event.preventDefault();
+  async function submit() {
     const data = new FormData();
     for (const [key, value] of Object.entries(values)) {
       if (
@@ -152,217 +155,283 @@ function MadrasaProfileForm({ profile }) {
           معلومات پرنٹس اور سسٹم کی شناخت کے لیے استعمال ہوں گی۔
         </p>
       </header>
-      <form onSubmit={submit} className="space-y-6">
-        <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5">
-            <h2 className="font-bold">لوگو اور بنیادی شناخت</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              مدرسہ کا واضح لوگو اپ لوڈ کریں۔
-            </p>
-          </div>
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="grid size-28 shrink-0 place-items-center overflow-hidden rounded-xl border border-dashed border-input bg-muted">
-              <>
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="مدرسہ کا لوگو"
-                    className="size-full object-cover"
+      <div>
+        <Tabs defaultValue="identity" className="gap-6">
+          <TabsList className="h-auto w-full justify-start gap-1 rounded-2xl border border-border bg-card p-1.5 shadow-sm">
+            <TabsTrigger value="identity" className="h-10 px-4">
+              <Building2 className="size-4" />
+              شناخت
+            </TabsTrigger>
+            <TabsTrigger value="details" className="h-10 px-4">
+              <ContactRound className="size-4" />
+              رابطہ و انتظام
+            </TabsTrigger>
+            <TabsTrigger value="branding" className="h-10 px-4">
+              <Palette className="size-4" />
+              برانڈنگ
+            </TabsTrigger>
+            <TabsTrigger value="backup" className="h-10 px-4">
+              <ShieldCheck className="size-4" />
+              بیک اپ
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="identity" className="space-y-6">
+            <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <div className="mb-5">
+                <h2 className="font-bold">لوگو اور بنیادی شناخت</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  مدرسہ کا واضح لوگو اپ لوڈ کریں۔
+                </p>
+              </div>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                <div className="grid size-28 shrink-0 place-items-center overflow-hidden rounded-xl border border-dashed border-input bg-muted">
+                  <>
+                    {preview ? (
+                      <img
+                        src={preview}
+                        alt="مدرسہ کا لوگو"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <ImagePlus className="size-8 text-muted-foreground" />
+                    )}
+                  </>
+                </div>
+                <label className="grid gap-2 text-sm font-medium">
+                  مدرسہ کا لوگو
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={chooseLogo}
+                    className="block w-full text-sm text-muted-foreground file:me-0 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
                   />
-                ) : (
-                  <ImagePlus className="size-8 text-muted-foreground" />
-                )}
-              </>
-            </div>
-            <label className="grid gap-2 text-sm font-medium">
-              مدرسہ کا لوگو
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={chooseLogo}
-                className="block w-full text-sm text-muted-foreground file:me-0 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
-              />
-              <span className="text-xs font-normal text-muted-foreground">
-                PNG، JPG یا WebP فائل منتخب کریں۔
-              </span>
-            </label>
-          </div>
-        </section>
-        <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 font-bold">
-                <Palette className="size-5 text-primary" />
-                برانڈ کے رنگ
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                بنیادی بٹنوں، روابط اور سائڈ بار کے رنگ اپنے مدرسہ کی شناخت کے
-                مطابق منتخب کریں۔
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={resetBrandColors}
-            >
-              <RotateCcw />
-              اصل رنگ بحال کریں
-            </Button>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2">
-            {[
-              ["primary_color", "بنیادی رنگ", DEFAULT_BRAND_COLORS.primary],
-              [
-                "sidebar_color",
-                "سائڈ بار کا رنگ",
-                DEFAULT_BRAND_COLORS.sidebar,
-              ],
-            ].map(([name, label, fallback]) => {
-              const color = values[name] || fallback;
-              return (
-                <label key={name} className="grid gap-2 text-sm font-medium">
-                  {label}
-                  <span className="flex items-center gap-3 rounded-lg border border-input bg-background p-2">
-                    <input
-                      name={name}
-                      type="color"
-                      value={color}
-                      onChange={changeValue}
-                      className="size-10 cursor-pointer rounded-md border-0 bg-transparent p-0"
-                      aria-label={label}
-                    />
-                    <input
-                      name={name}
-                      value={color}
-                      onChange={changeValue}
-                      pattern="#[0-9A-Fa-f]{6}"
-                      maxLength={7}
-                      dir="ltr"
-                      className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 font-mono text-sm uppercase outline-none focus:ring-3 focus:ring-ring/50"
-                    />
-                    <span
-                      className="size-10 shrink-0 rounded-md border border-border shadow-sm"
-                      style={{ backgroundColor: color }}
-                      aria-hidden="true"
-                    />
+                  <span className="text-xs font-normal text-muted-foreground">
+                    PNG، JPG یا WebP فائل منتخب کریں۔
                   </span>
                 </label>
-              );
-            })}
-          </div>
-        </section>
-        <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5">
-            <h2 className="font-bold">بیک اپ اور بحالی</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              اپنے مدرسہ کے ڈیٹا اور اپ لوڈ کی گئی تصاویر کا ZIP بیک اپ محفوظ
-              کریں۔ بحالی صرف اسی مدرسہ کے بیک اپ سے کی جا سکتی ہے۔
-            </p>
-          </div>
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="rounded-xl bg-muted p-4">
-              <h3 className="font-semibold">ڈیٹا بیک اپ</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                موجودہ طلبہ، فیس، امتحانات، حاضری، ہاسٹل، حفظ اور میڈیا فائلوں
-                کی نقل ڈاؤن لوڈ کریں۔
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={downloadBackup}
-                className="mt-4"
-              >
-                <Download />
-                بیک اپ ڈاؤن لوڈ کریں
-              </Button>
-            </div>
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-              <h3 className="font-semibold text-destructive">
-                بیک اپ بحال کریں
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                احتیاط: بحالی موجودہ مدرسہ کا تمام ڈیٹا تبدیل کر دے گی۔ صرف اسی
-                مدرسہ کا ZIP بیک اپ اپ لوڈ کریں۔
-              </p>
-              <input
-                type="file"
-                accept="application/zip,.zip"
-                onChange={(event) =>
-                  setBackupFile(event.target.files?.[0] || null)
-                }
-                className="mt-4 block w-full text-sm text-muted-foreground file:me-0 file:rounded-md file:border-0 file:bg-destructive file:px-3 file:py-2 file:text-sm file:font-medium file:text-destructive-foreground"
-              />
-              {backupFile && (
-                <p className="mt-2 text-xs text-muted-foreground" dir="ltr">
-                  {backupFile.name}
+              </div>
+            </section>
+            <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <div className="mb-5">
+                <h2 className="flex items-center gap-2 font-bold">
+                  <UsersRound className="size-5 text-primary" />
+                  طلبہ کی اصطلاح
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  ادارے کی نوعیت کے مطابق نظام میں استعمال ہونے والی طلبہ کی
+                  اصطلاح منتخب کریں۔
                 </p>
-              )}
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={restore}
-                disabled={!backupFile || restoreBackup.isPending}
-                className="mt-4"
-              >
-                <RotateCcw />
-                {restoreBackup.isPending
-                  ? "بحال ہو رہا ہے..."
-                  : "بیک اپ بحال کریں"}
-              </Button>
-            </div>
-          </div>
-        </section>
-        <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
-          <div className="mb-5">
-            <h2 className="font-bold">رابطہ اور انتظامی معلومات</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              یہ معلومات رسیدوں، فارم اور پرنٹ شدہ رپورٹس میں شامل کی جا سکتی
-              ہیں۔
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {fields.map(([name, label, placeholder, required, type]) => (
-              <label key={name} className="grid gap-2 text-sm font-medium">
-                {label}
-                <input
-                  name={name}
-                  type={type || "text"}
-                  value={values[name] || ""}
+              </div>
+              <label className="grid max-w-md gap-2 text-sm font-medium">
+                ادارے کی قسم
+                <select
+                  name="student_terminology"
+                  value={values.student_terminology || "boys"}
                   onChange={changeValue}
-                  placeholder={placeholder}
-                  required={required}
-                  dir={
-                    type === "email" || type === "url" || type === "number"
-                      ? "ltr"
-                      : undefined
-                  }
                   className={inputClass}
+                >
+                  <option value="boys">طلبہ — لڑکوں کا ادارہ</option>
+                  <option value="girls">طالبات — لڑکیوں کا ادارہ</option>
+                  <option value="mixed">طلبہ و طالبات — مخلوط ادارہ</option>
+                </select>
+              </label>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="branding">
+            <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 font-bold">
+                    <Palette className="size-5 text-primary" />
+                    برانڈ کے رنگ
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    بنیادی بٹنوں، روابط اور سائڈ بار کے رنگ اپنے مدرسہ کی شناخت
+                    کے مطابق منتخب کریں۔
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={resetBrandColors}
+                >
+                  <RotateCcw />
+                  اصل رنگ بحال کریں
+                </Button>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {[
+                  ["primary_color", "بنیادی رنگ", DEFAULT_BRAND_COLORS.primary],
+                  [
+                    "sidebar_color",
+                    "سائڈ بار کا رنگ",
+                    DEFAULT_BRAND_COLORS.sidebar,
+                  ],
+                ].map(([name, label, fallback]) => {
+                  const color = values[name] || fallback;
+                  return (
+                    <label
+                      key={name}
+                      className="grid gap-2 text-sm font-medium"
+                    >
+                      {label}
+                      <span className="flex items-center gap-3 rounded-lg border border-input bg-background p-2">
+                        <input
+                          name={name}
+                          type="color"
+                          value={color}
+                          onChange={changeValue}
+                          className="size-10 cursor-pointer rounded-md border-0 bg-transparent p-0"
+                          aria-label={label}
+                        />
+                        <input
+                          name={name}
+                          value={color}
+                          onChange={changeValue}
+                          pattern="#[0-9A-Fa-f]{6}"
+                          maxLength={7}
+                          dir="ltr"
+                          className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 font-mono text-sm uppercase outline-none focus:ring-3 focus:ring-ring/50"
+                        />
+                        <span
+                          className="size-10 shrink-0 rounded-md border border-border shadow-sm"
+                          style={{ backgroundColor: color }}
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="backup">
+            <BackupManagement />
+            <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <div className="mb-5">
+                <h2 className="font-bold">بیک اپ اور بحالی</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  اپنے مدرسہ کے ڈیٹا اور اپ لوڈ کی گئی تصاویر کا ZIP بیک اپ
+                  محفوظ کریں۔ بحالی صرف اسی مدرسہ کے بیک اپ سے کی جا سکتی ہے۔
+                </p>
+              </div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className="rounded-xl bg-muted p-4">
+                  <h3 className="font-semibold">ڈیٹا بیک اپ</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    موجودہ طلبہ، فیس، امتحانات، حاضری، ہاسٹل، حفظ اور میڈیا
+                    فائلوں کی نقل ڈاؤن لوڈ کریں۔
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={downloadBackup}
+                    className="mt-4"
+                  >
+                    <Download />
+                    بیک اپ ڈاؤن لوڈ کریں
+                  </Button>
+                </div>
+                <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+                  <h3 className="font-semibold text-destructive">
+                    بیک اپ بحال کریں
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    احتیاط: بحالی موجودہ مدرسہ کا تمام ڈیٹا تبدیل کر دے گی۔ صرف
+                    اسی مدرسہ کا ZIP بیک اپ اپ لوڈ کریں۔
+                  </p>
+                  <input
+                    type="file"
+                    accept="application/zip,.zip"
+                    onChange={(event) =>
+                      setBackupFile(event.target.files?.[0] || null)
+                    }
+                    className="mt-4 block w-full text-sm text-muted-foreground file:me-0 file:rounded-md file:border-0 file:bg-destructive file:px-3 file:py-2 file:text-sm file:font-medium file:text-destructive-foreground"
+                  />
+                  {backupFile && (
+                    <p className="mt-2 text-xs text-muted-foreground" dir="ltr">
+                      {backupFile.name}
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={restore}
+                    disabled={!backupFile || restoreBackup.isPending}
+                    className="mt-4"
+                  >
+                    <RotateCcw />
+                    {restoreBackup.isPending
+                      ? "بحال ہو رہا ہے..."
+                      : "بیک اپ بحال کریں"}
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="details">
+            <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <div className="mb-5">
+                <h2 className="font-bold">رابطہ اور انتظامی معلومات</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  یہ معلومات رسیدوں، فارم اور پرنٹ شدہ رپورٹس میں شامل کی جا
+                  سکتی ہیں۔
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {fields.map(([name, label, placeholder, required, type]) => (
+                  <label key={name} className="grid gap-2 text-sm font-medium">
+                    {label}
+                    <input
+                      name={name}
+                      type={type || "text"}
+                      value={values[name] || ""}
+                      onChange={changeValue}
+                      placeholder={placeholder}
+                      required={required}
+                      dir={
+                        type === "email" || type === "url" || type === "number"
+                          ? "ltr"
+                          : undefined
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                ))}
+              </div>
+              <label className="mt-4 grid gap-2 text-sm font-medium">
+                مکمل پتہ
+                <textarea
+                  name="address"
+                  value={values.address || ""}
+                  onChange={changeValue}
+                  rows={4}
+                  placeholder="گلی، علاقہ، نزدیکی نشان وغیرہ"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-ring/50"
                 />
               </label>
-            ))}
+            </section>
+          </TabsContent>
+
+          <div className="sticky bottom-4 z-10 flex justify-end rounded-2xl border border-border bg-background/90 p-3 shadow-lg backdrop-blur">
+            <Button
+              type="button"
+              onClick={submit}
+              disabled={updateProfile.isPending}
+            >
+              <Save />
+              {updateProfile.isPending
+                ? "محفوظ ہو رہا ہے..."
+                : "معلومات محفوظ کریں"}
+            </Button>
           </div>
-          <label className="mt-4 grid gap-2 text-sm font-medium">
-            مکمل پتہ
-            <textarea
-              name="address"
-              value={values.address || ""}
-              onChange={changeValue}
-              rows={4}
-              placeholder="گلی، علاقہ، نزدیکی نشان وغیرہ"
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-ring/50"
-            />
-          </label>
-        </section>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={updateProfile.isPending}>
-            <Save />
-            {updateProfile.isPending
-              ? "محفوظ ہو رہا ہے..."
-              : "معلومات محفوظ کریں"}
-          </Button>
-        </div>
-      </form>
+        </Tabs>
+      </div>
     </div>
   );
 }

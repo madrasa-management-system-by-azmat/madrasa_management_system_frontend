@@ -5,6 +5,11 @@ import {
   getStudentAttendance,
   getStudentAttendanceReport,
   saveStudentAttendance,
+  getAttendanceAlerts,
+  getAttendanceAlertRules,
+  updateAttendanceAlertRules,
+  refreshAttendanceAlerts,
+  updateAttendanceAlertStatus,
 } from "@/lib/api/attendance";
 
 export function useStudentAttendance(date, academicClass) {
@@ -40,5 +45,46 @@ export function useStudentAttendanceReport(
     queryFn: () =>
       getStudentAttendanceReport({ academicClass, period, endDate }),
     enabled: Boolean(enabled && academicClass && endDate),
+  });
+}
+
+export function useAttendanceAlerts(params = {}) {
+  return useQuery({
+    queryKey: ["attendance-alerts", params],
+    queryFn: () => getAttendanceAlerts(params),
+  });
+}
+
+export function useAttendanceAlertRules() {
+  return useQuery({
+    queryKey: ["attendance-alert-rules"],
+    queryFn: getAttendanceAlertRules,
+  });
+}
+
+export function useUpdateAttendanceAlertRules() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateAttendanceAlertRules,
+    onSuccess: (data) =>
+      queryClient.setQueryData(["attendance-alert-rules"], data),
+  });
+}
+
+export function useRefreshAttendanceAlerts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: refreshAttendanceAlerts,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["attendance-alerts"] }),
+  });
+}
+
+export function useUpdateAttendanceAlertStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateAttendanceAlertStatus,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["attendance-alerts"] }),
   });
 }

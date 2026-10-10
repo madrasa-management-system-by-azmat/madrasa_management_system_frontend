@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ClipboardList, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { TableLoadingSkeleton } from "@/components/ui/loading-skeleton";
 import {
   Dialog,
   DialogContent,
@@ -230,9 +231,11 @@ export default function ExamsManagement() {
       </header>
       <section className="overflow-hidden rounded-xl border border-border bg-card">
         {isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">
-            {text.loading}
-          </p>
+          <TableLoadingSkeleton
+            rows={5}
+            columns={5}
+            className="rounded-none border-0"
+          />
         ) : !exams.length ? (
           <p className="p-8 text-center text-sm text-muted-foreground">
             {text.empty}

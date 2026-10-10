@@ -1,7 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Alyamama:wght@300..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+@font-face {
+  font-family: "Jameel Noori Nastaleeq";
+  src: url("../assets/fonts/Gulzar-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -57,7 +64,7 @@
 }
 
 :root {
-  --font-app-sans: "Alyamama", serif;
+  --font-app-sans: "Jameel Noori Nastaleeq", serif;
   --font-app-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;

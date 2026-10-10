@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DetailLoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { useTeacher } from "@/hooks/useTeachers";
 import { getMediaUrl } from "@/lib/apiClient";
 
@@ -34,12 +35,7 @@ const text = {
 
 export default function TeacherDetails({ teacherId }) {
   const { data: teacher, isLoading, isError } = useTeacher(teacherId);
-  if (isLoading)
-    return (
-      <div className="grid min-h-64 place-items-center text-sm text-muted-foreground">
-        {text.loading}
-      </div>
-    );
+  if (isLoading) return <DetailLoadingSkeleton />;
   if (isError)
     return (
       <p className="rounded-xl border border-destructive bg-destructive/10 p-5 text-sm text-destructive">

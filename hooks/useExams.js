@@ -14,6 +14,17 @@ function useExamMutation(key, mutationFn) {
   });
 }
 
+function useExamWorkflowMutation(mutationFn) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (_data, examId) => {
+      queryClient.invalidateQueries({ queryKey: ["internal-exams"] });
+      queryClient.invalidateQueries({ queryKey: ["exam-analytics", examId] });
+    },
+  });
+}
+
 export const useInternalExams = () =>
   useExamQuery("internal-exams", examsApi.getInternalExams);
 export const useCreateInternalExam = () =>
@@ -60,3 +71,26 @@ export const useUpdateWafaqResult = () =>
   );
 export const useDeleteWafaqResult = () =>
   useExamMutation("wafaq-results", examsApi.deleteWafaqResult);
+export const useExamAnalytics = (id) =>
+  useQuery({
+    queryKey: ["exam-analytics", id],
+    queryFn: () => examsApi.getExamAnalytics(id),
+    enabled: Boolean(id),
+  });
+export const useVerifyExam = () => useExamWorkflowMutation(examsApi.verifyExam);
+export const useFinalizeExam = () =>
+  useExamWorkflowMutation(examsApi.finalizeExam);
+export const usePublishExam = () =>
+  useExamWorkflowMutation(examsApi.publishExam);
+export const useExamDuties = () =>
+  useExamQuery("exam-duties", examsApi.getExamDuties);
+export const useCreateExamDuty = () =>
+  useExamMutation("exam-duties", examsApi.createExamDuty);
+export const useExamAttendance = () =>
+  useExamQuery("exam-attendance", examsApi.getExamAttendance);
+export const useCreateExamAttendance = () =>
+  useExamMutation("exam-attendance", examsApi.createExamAttendance);
+export const useAnnualResults = () =>
+  useExamQuery("annual-results", examsApi.getAnnualResults);
+export const useGenerateAnnualResults = () =>
+  useExamMutation("annual-results", examsApi.generateAnnualResults);

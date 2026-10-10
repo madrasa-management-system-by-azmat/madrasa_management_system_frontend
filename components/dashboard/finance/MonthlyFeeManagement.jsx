@@ -26,6 +26,7 @@ import {
   useMonthlyFees,
 } from "@/hooks/useFinance";
 import { useAcademicClasses } from "@/hooks/useAcademics";
+import { useAllStudents } from "@/hooks/useStudents";
 import { getStudent } from "@/lib/api/students";
 import { getMadrasaProfile } from "@/lib/api/settings";
 import { getStudentFeeVoucherHtml } from "@/lib/printStudentFeeVoucher";
@@ -66,6 +67,7 @@ const text = {
   paymentSuccess: "ادائیگی محفوظ ہو گئی",
   error: "عمل مکمل نہیں ہو سکا۔",
   print: "واؤچر پرنٹ کریں",
+  singleVoucher: "ایک طالب علم کا واؤچر",
 };
 const inputClass =
   "h-10 w-full rounded-lg border border-input bg-background px-3 text-right text-sm outline-none focus:ring-3 focus:ring-ring/50";
@@ -155,6 +157,140 @@ function FeeSetupDialog({
               {text.cancel}
             </Button>
             <Button type="submit" disabled={isPending || !academicClass}>
+              <Plus />
+              {isPending ? "..." : text.prepare}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SingleVoucherDialog({
+  open,
+  onOpenChange,
+  students,
+  onPrepare,
+  isPending,
+}) {
+  const [query, setQuery] = useState("");
+  const [student, setStudent] = useState("");
+  const [month, setMonth] = useState(currentMonth());
+  const [dueDate, setDueDate] = useState(today());
+  const matches = students
+    .filter((item) => {
+      const search = query.trim().toLowerCase();
+      return (
+        !search ||
+        item.full_name?.toLowerCase().includes(search) ||
+        item.registration_number?.toLowerCase().includes(search)
+      );
+    })
+    .slice(0, 30);
+
+  function selectStudent(item) {
+    setStudent(String(item.id));
+    setQuery(`${item.full_name} — ${item.registration_number}`);
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    onPrepare({ student, month, dueDate });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent dir="rtl" className="text-right">
+        <DialogHeader>
+          <DialogTitle>{text.singleVoucher}</DialogTitle>
+          <DialogDescription>
+            طالب علم منتخب کریں، پھر صرف اسی طالب علم کا ماہانہ فیس واؤچر تیار
+            کریں۔
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit}>
+          <div className="grid gap-4 px-5 py-5">
+            <label className="grid gap-2 text-sm font-medium">
+              {text.student}
+              <div className="relative">
+                <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="search"
+                  role="combobox"
+                  aria-controls="single-voucher-students"
+                  aria-expanded={Boolean(query) && !student}
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setStudent("");
+                  }}
+                  placeholder="نام یا رجسٹریشن نمبر تلاش کریں"
+                  className={`${inputClass} pr-9`}
+                />
+              </div>
+            </label>
+            {query && !student && (
+              <div
+                id="single-voucher-students"
+                role="listbox"
+                className="max-h-48 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-lg"
+              >
+                {matches.length ? (
+                  matches.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="option"
+                      aria-selected="false"
+                      onClick={() => selectStudent(item)}
+                      className="flex w-full justify-between rounded-md px-3 py-2 text-right text-sm hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <span>{item.full_name}</span>
+                      <span dir="ltr" className="text-muted-foreground">
+                        {item.registration_number}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">
+                    کوئی طالب علم نہیں ملا
+                  </p>
+                )}
+              </div>
+            )}
+            <label className="grid gap-2 text-sm font-medium">
+              {text.month}
+              <input
+                type="month"
+                value={month}
+                onChange={(event) => setMonth(event.target.value)}
+                required
+                dir="ltr"
+                className={inputClass}
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium">
+              {text.dueDate}
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+                required
+                dir="ltr"
+                className={inputClass}
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              {text.cancel}
+            </Button>
+            <Button type="submit" disabled={!student || isPending}>
               <Plus />
               {isPending ? "..." : text.prepare}
             </Button>
@@ -411,6 +547,8 @@ export default function MonthlyFeeManagement() {
   const [filterClass, setFilterClass] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
   const [setupOpen, setSetupOpen] = useState(false);
+  const [singleVoucherOpen, setSingleVoucherOpen] = useState(false);
+  const [singleStudent, setSingleStudent] = useState("");
   const [paymentFee, setPaymentFee] = useState(null);
   const [drafts, setDrafts] = useState([]);
   const [draftOpen, setDraftOpen] = useState(false);
@@ -422,6 +560,7 @@ export default function MonthlyFeeManagement() {
   });
   const { data: academicClasses = [], isLoading: isLoadingClasses } =
     useAcademicClasses();
+  const { data: students = [] } = useAllStudents();
   const generate = useGenerateMonthlyFees();
   const createPayment = useCreateMonthlyFeePayment();
   async function prepare({
@@ -451,7 +590,9 @@ export default function MonthlyFeeManagement() {
       const result = await generate.mutateAsync({
         month,
         due_date: dueDate,
-        academic_class: Number(academicClass),
+        ...(singleStudent
+          ? { student: Number(singleStudent) }
+          : { academic_class: Number(academicClass) }),
         invoices: drafts.map(
           ({
             student,
@@ -475,8 +616,42 @@ export default function MonthlyFeeManagement() {
         `${result.created} طلبہ کے بل محفوظ کیے گئے۔`,
       );
       setDraftOpen(false);
+      setSingleStudent("");
     } catch (error) {
       toast.error(text.error, getApiErrorMessage(error, text.error));
+    }
+  }
+  async function prepareSingleVoucher({
+    student,
+    month: selectedMonth,
+    dueDate: selectedDueDate,
+  }) {
+    setSingleStudent(student);
+    setAcademicClass("");
+    setMonth(selectedMonth);
+    setDueDate(selectedDueDate);
+    setFilterMonth(selectedMonth);
+    try {
+      const result = await generate.mutateAsync({
+        student: Number(student),
+        month: selectedMonth,
+        due_date: selectedDueDate,
+      });
+      if (!result.invoices?.length) {
+        throw new Error(
+          "منتخب طالب علم فعال نہیں یا اس کی موجودہ جماعت مقرر نہیں ہے۔",
+        );
+      }
+      setDrafts(result.invoices);
+      setSingleVoucherOpen(false);
+      setDraftOpen(true);
+      toast.success(text.prepared);
+    } catch (error) {
+      setSingleStudent("");
+      toast.error(
+        text.error,
+        getApiErrorMessage(error, error.message || text.error),
+      );
     }
   }
   async function savePayment(data) {
@@ -534,10 +709,20 @@ export default function MonthlyFeeManagement() {
               : "ابھی جماعت منتخب نہیں کی گئی"}
           </p>
         </div>
-        <Button onClick={() => setSetupOpen(true)}>
-          <Plus />
-          {text.prepare}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={() => setSingleVoucherOpen(true)}
+            disabled={!students.length}
+          >
+            <Printer />
+            {text.singleVoucher}
+          </Button>
+          <Button onClick={() => setSetupOpen(true)}>
+            <Plus />
+            {text.prepare}
+          </Button>
+        </div>
       </section>
       <section className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:flex-wrap sm:items-center">
@@ -689,6 +874,13 @@ export default function MonthlyFeeManagement() {
         academicClasses={academicClasses}
         isLoadingClasses={isLoadingClasses}
         onPrepare={prepare}
+        isPending={generate.isPending}
+      />
+      <SingleVoucherDialog
+        open={singleVoucherOpen}
+        onOpenChange={setSingleVoucherOpen}
+        students={students.filter((student) => student.status === "active")}
+        onPrepare={prepareSingleVoucher}
         isPending={generate.isPending}
       />
       <PaymentDialog
